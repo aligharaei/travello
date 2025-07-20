@@ -30,7 +30,7 @@ class TourController extends Controller
             return success('', new TourCollection(collect($data['data'])));
         } catch (Exception) {
             //Todo: translate and localization implementation
-            return failed('Service temporarily unavailable');
+            return failed(__('message.tour.error.unavailable'));
         }
     }
 
@@ -41,17 +41,18 @@ class TourController extends Controller
             return success('', new TourResource($tour));
 
         } catch (Exception) {
-            return failed('Unable to fetch tour details');
+            return failed(__('message.tour.detail.error.fetch_failed'));
         }
     }
 
     public function availability(string $id)
     {
+
         try {
             $availability = $this->tourProvider->checkAvailability($id);
             return success('', new AvailabilityResource($availability));
         } catch (Exception) {
-            return failed('Unable to check availability');
+            return failed(__('message.tour.availability.error.fetch_failed'));
         }
     }
 
@@ -64,7 +65,7 @@ class TourController extends Controller
             $prices = $this->tourProvider->getTourPrices($perPage, $page);
             return success('', new PriceCollection($prices));
         } catch (Exception) {
-            return failed('Unable to fetch prices');
+            return failed(__('message.tour.price.error.fetch_failed'));
         }
     }
 }

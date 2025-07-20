@@ -17,6 +17,7 @@ class TourResource extends JsonResource
             'id'          => $this['id'],
             'title'       => $this['title'],
             'description' => $this['description'],
+            //Todo: fix the country field to dont show on show.
             'country'     => $this['country'] ?? null,
             'city'        => $this['city']
         ];
