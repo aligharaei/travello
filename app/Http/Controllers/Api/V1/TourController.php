@@ -29,7 +29,6 @@ class TourController extends Controller
             //Todo fix the pagination and add it in request apidog
             return success('', new TourCollection(collect($data['data'])));
         } catch (Exception) {
-            //Todo: translate and localization implementation
             return failed(__('message.tour.error.unavailable'));
         }
     }
