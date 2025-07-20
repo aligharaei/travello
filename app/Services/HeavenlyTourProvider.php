@@ -19,7 +19,7 @@ class HeavenlyTourProvider implements TourProviderInterface
     public function getTours(int $perPage = 10, int $page = 1): array
     {
         try {
-            $response = Http::retry(1, 100)
+            $response = Http::retry(5, 100)
                 ->withoutVerifying()
                 ->get("{$this->baseUrl}/api/tours", [
                     'limit' => $perPage,
@@ -106,9 +106,13 @@ class HeavenlyTourProvider implements TourProviderInterface
 
     protected function normalizeAvailability(array $data, string $tourId): array
     {
+        $isAvailable = (bool)($data['available'] ?? false);
         return [
             'tour_id'   => $tourId,
-            'available' => (bool)($data['available'] ?? false),
+            'available' => $isAvailable,
+            'status'    => $isAvailable
+                ? __('tour.available')
+                : __('tour.unavailable'),
         ];
     }
 

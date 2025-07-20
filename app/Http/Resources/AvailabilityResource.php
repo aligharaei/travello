@@ -16,6 +16,7 @@ class AvailabilityResource extends JsonResource
         return [
             'available' => $this['available'],
             'tour_id'   => $this['tour_id'],
+            'status'    => $this['status']
         ];
     }
 }
