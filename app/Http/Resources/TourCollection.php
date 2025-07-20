@@ -14,7 +14,12 @@ class TourCollection extends ResourceCollection
     public function toArray($request): array
     {
         return [
-            'data' => $this->collection,
+            'data' => TourResource::collection($this->collection),
+            'meta' => [
+                'total' => $this->total(),
+                'page' => $this->currentPage(),
+                'limit' => $this->perPage(),
+            ]
         ];
     }
 }

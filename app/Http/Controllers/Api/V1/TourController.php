@@ -10,6 +10,7 @@ use App\Http\Resources\TourResource;
 use App\Interfaces\TourProviderInterface;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class TourController extends Controller
 {
@@ -26,8 +27,19 @@ class TourController extends Controller
             $page = $request->input('page', 1);
 
             $data = $this->tourProvider->getTours($perPage, $page);
-            //Todo fix the pagination and add it in request apidog
-            return success('', new TourCollection(collect($data['data'])));
+
+            $paginator = new LengthAwarePaginator(
+                collect($data['data']),
+                $data['meta']['total'],
+                $data['meta']['limit'],
+                $data['meta']['page'],
+                [
+                    'path'     => $request->url(),
+                    'pageName' => 'page',
+                ]
+            );
+
+            return success('', new TourCollection($paginator));
         } catch (Exception) {
             return failed(__('message.tour.error.unavailable'));
         }
