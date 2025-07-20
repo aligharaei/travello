@@ -10,5 +10,5 @@ interface TourProviderInterface
 
     public function checkAvailability(string $tourId): array;
 
-    public function getTourPrices(string $tourId): array;
+    public function getTourPrices(int $perPage = 10, int $page = 1): array;
 }
