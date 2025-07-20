@@ -144,11 +144,9 @@ class HeavenlyTourProvider implements TourProviderInterface
         $symbol = mb_substr(trim($rawPrice), 0, 1);
 
         $currencyMap = [
-            '$' => 'USD',
-            '€' => 'EUR',
-            '£' => 'GBP',
-            '¥' => 'JPY',
-            // Add more as needed
+            '$'   => __('currency.usd'),
+            '€'   => __('currency.eur'),
+            'AED' => __('currency.aed'),
         ];
 
         $currency = $currencyMap[$symbol] ?? 'UNKNOWN';
