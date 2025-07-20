@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AvailabilityResource;
 use App\Http\Resources\TourCollection;
 use App\Http\Resources\TourResource;
 use App\Interfaces\TourProviderInterface;
@@ -29,5 +30,11 @@ class TourController extends Controller
     {
         $tour = $this->tourProvider->getTourDetails($id);
         return new TourResource($tour);
+    }
+
+    public function availability(string $id)
+    {
+        $availability = $this->tourProvider->checkAvailability($id);
+        return new AvailabilityResource($availability);
     }
 }
