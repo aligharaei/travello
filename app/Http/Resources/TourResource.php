@@ -17,7 +17,7 @@ class TourResource extends JsonResource
             'id'          => $this['id'],
             'title'       => $this['title'],
             'description' => $this['description'],
-            'country'     => $this['country'],
+            'country'     => $this['country'] ?? null,
             'city'        => $this['city']
         ];
     }

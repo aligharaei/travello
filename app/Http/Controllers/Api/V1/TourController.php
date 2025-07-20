@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TourCollection;
+use App\Http\Resources\TourResource;
 use App\Interfaces\TourProviderInterface;
 use Illuminate\Http\Request;
 
@@ -22,5 +23,11 @@ class TourController extends Controller
 
         $data = $this->tourProvider->getTours($perPage, $page);
         return new TourCollection(collect($data['data']));
+    }
+
+    public function show(string $id)
+    {
+        $tour = $this->tourProvider->getTourDetails($id);
+        return new TourResource($tour);
     }
 }

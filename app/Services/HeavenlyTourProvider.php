@@ -42,7 +42,21 @@ class HeavenlyTourProvider implements TourProviderInterface
 
     public function getTourDetails(string $id): array
     {
-        // TODO: Implement getTourDetails() method.
+        $response = Http::withoutVerifying()->get("{$this->baseUrl}/api/tours/{$id}");
+        $data = $response->json();
+        return $this->normalizeTourDetails($data);
+    }
+
+    protected function normalizeTourDetails(array $data): array
+    {
+        return [
+            'id'          => $data['id'],
+            'title'       => $data['title'],
+            'description' => $data['description'],
+            'city'        => $data['city'],
+            'categories'  => $data['categories'] ?? [],
+            'photos'      => $data['photos'] ?? [],
+        ];
     }
 
     public function checkAvailability(string $tourId): array
