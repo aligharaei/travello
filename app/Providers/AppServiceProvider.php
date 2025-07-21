@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Interfaces\TourProviderInterface;
 use App\Services\HeavenlyTourProvider;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,5 +23,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         require_once app_path('helpers.php');
+        Schema::defaultStringLength(191);
     }
 }
