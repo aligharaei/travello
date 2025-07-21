@@ -9,6 +9,7 @@ use App\Http\Resources\TourCollection;
 use App\Http\Resources\TourResource;
 use App\Interfaces\TourProviderInterface;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -20,24 +21,14 @@ class TourController extends Controller
     {
     }
 
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         try {
             $perPage = $request->input('limit', 10);
             $page = $request->input('page', 1);
 
-            $data = $this->tourProvider->getTours($perPage, $page);
-
-            $paginator = new LengthAwarePaginator(
-                collect($data['data']),
-                $data['meta']['total'],
-                $data['meta']['limit'],
-                $data['meta']['page'],
-                [
-                    'path'     => $request->url(),
-                    'pageName' => 'page',
-                ]
-            );
+            $tours = $this->tourProvider->getTours($perPage, $page);
+            $paginator = $this->createPaginator($tours, $request);
 
             return success('', new TourCollection($paginator));
         } catch (Exception) {
@@ -45,7 +36,7 @@ class TourController extends Controller
         }
     }
 
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
         try {
             $tour = $this->tourProvider->getTourDetails($id);
@@ -56,7 +47,7 @@ class TourController extends Controller
         }
     }
 
-    public function availability(string $id)
+    public function availability(string $id): JsonResponse
     {
 
         try {
@@ -67,27 +58,32 @@ class TourController extends Controller
         }
     }
 
-    public function prices(Request $request)
+    public function prices(Request $request): JsonResponse
     {
         try {
             $perPage = $request->input('limit', 10);
             $page = $request->input('page', 1);
 
             $prices = $this->tourProvider->getTourPrices($perPage, $page);
-            $paginator = new LengthAwarePaginator(
-                collect($prices['data']),
-                $prices['meta']['total'],
-                $prices['meta']['limit'],
-                $prices['meta']['page'],
-                [
-                    'path'     => $request->url(),
-                    'pageName' => 'page',
-                ]
-            );
+            $paginator = $this->createPaginator($prices, $request);
 
             return success('', new PriceCollection($paginator));
         } catch (Exception $e) {
             return failed(__('message.tour.price.error.fetch_failed'));
         }
+    }
+
+    private function createPaginator(array $data, Request $request): LengthAwarePaginator
+    {
+        return new LengthAwarePaginator(
+            collect($data['data']),
+            $data['meta']['total'],
+            $data['meta']['limit'],
+            $data['meta']['page'],
+            [
+                'path'     => $request->url(),
+                'pageName' => 'page',
+            ]
+        );
     }
 }

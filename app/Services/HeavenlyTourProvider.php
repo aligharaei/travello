@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Interfaces\TourProviderInterface;
 use Exception;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -21,26 +22,17 @@ class HeavenlyTourProvider implements TourProviderInterface
         $cacheKey = "heavenly_tours_list_{$perPage}_{$page}";
 
         return Cache::remember($cacheKey, now()->addMinutes(10), function () use ($perPage, $page) {
-            try {
-                $response = Http::retry(5, 100)
-                    ->withoutVerifying()
-                    ->get("{$this->baseUrl}/api/tours", [
-                        'limit' => $perPage,
-                        'page'  => $page
-                    ]);
+            $response = $this->sendRequest('GET', '/api/tours', [
+                'limit' => $perPage,
+                'page'  => $page,
+            ], 'Failed to fetch tours list');
 
-                if (!$response->successful()) {
-                    throw new Exception("Failed to fetch tours list");
-                }
+            $data = $response->json();
 
-                $data = $response->json();
-                return [
-                    'data' => collect($data['data'])->map(fn($tour) => $this->normalizeTourListItem($tour))->all(),
-                    'meta' => $data['meta'] ?? [],
-                ];
-            } catch (Exception) {
-                throw new Exception("Failed to fetch tours list");
-            }
+            return [
+                'data' => collect($data['data'] ?? [])->map(fn($item) => $this->normalizeTourListItem($item))->all(),
+                'meta' => $data['meta'] ?? [],
+            ];
         });
     }
 
@@ -49,20 +41,14 @@ class HeavenlyTourProvider implements TourProviderInterface
         $cacheKey = "heavenly_tour_details_{$id}";
 
         return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($id) {
-            try {
-                $response = Http::retry(5, 100)
-                    ->withoutVerifying()
-                    ->get("{$this->baseUrl}/api/tours/{$id}");
+            $response = $this->sendRequest(
+                'GET',
+                "/api/tours/{$id}",
+                [],
+                "Failed to fetch tour details. ID: {$id}"
+            );
 
-                if (!$response->successful()) {
-                    throw new Exception("Failed to fetch tour details. id: {$id}");
-                }
-
-                return $this->normalizeTourDetails($response->json());
-
-            } catch (Exception) {
-                throw new Exception("Failed to fetch tour details. id: {$id}");
-            }
+            return $this->normalizeTourDetails($response->json());
         });
     }
 
@@ -71,20 +57,14 @@ class HeavenlyTourProvider implements TourProviderInterface
         $cacheKey = "heavenly_availability_{$tourId}";
 
         return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($tourId) {
-            try {
-                $response = Http::retry(5, 100)
-                    ->withoutVerifying()
-                    ->get("{$this->baseUrl}/api/tours/{$tourId}/availability");
+            $response = $this->sendRequest(
+                'GET',
+                "/api/tours/{$tourId}/availability",
+                [],
+                "Failed to check availability for tour {$tourId}"
+            );
 
-                if (!$response->successful()) {
-                    throw new Exception("Failed to check availability for tour {$tourId}");
-                }
-
-                return $this->normalizeAvailability($response->json(), $tourId);
-
-            } catch (Exception) {
-                throw new Exception("Failed to check availability for tour {$tourId}");
-            }
+            return $this->normalizeAvailability($response->json(), $tourId);
         });
     }
 
@@ -93,29 +73,42 @@ class HeavenlyTourProvider implements TourProviderInterface
         $cacheKey = "heavenly_prices_{$perPage}_{$page}";
 
         return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($perPage, $page) {
-            try {
-                $response = Http::retry(5, 100)
-                    ->withoutVerifying()
-                    ->get("{$this->baseUrl}/api/tour-prices", [
-                        'limit' => $perPage,
-                        'page'  => $page
-                    ]);
+            $response = $this->sendRequest(
+                'GET',
+                '/api/tour-prices', [
+                'limit' => $perPage,
+                'page'  => $page,
+            ], 'Failed to fetch tour prices'
+            );
 
-                if (!$response->successful()) {
-                    throw new Exception("Failed to fetch tour prices");
-                }
+            $data = $response->json();
 
-                $data = $response->json();
-
-                return [
-                    'data' => collect($data['data'] ?? [])->map(fn($item) => $this->normalizeTourPrice($item))->all(),
-                    'meta' => $data['meta'] ?? []
-                ];
-
-            } catch (Exception) {
-                throw new Exception("Failed to fetch tour prices");
-            }
+            return [
+                'data' => collect($data['data'] ?? [])->map(fn($item) => $this->normalizeTourPrice($item))->all(),
+                'meta' => $data['meta'] ?? [],
+            ];
         });
+    }
+
+    /**
+     * Unified HTTP request handler with retries and exception control.
+     */
+    protected function sendRequest(string $method, string $uri, array $params = [], string $errorMessage = ''): Response
+    {
+        try {
+            $response = Http::retry(5, 100)
+                ->withoutVerifying()
+                ->{$method}("{$this->baseUrl}{$uri}", $params);
+
+            if (!$response->successful()) {
+                throw new Exception($errorMessage);
+            }
+
+            return $response;
+        } catch (Exception $e) {
+            report($e);
+            throw new Exception($errorMessage);
+        }
     }
 
     protected function normalizeTourListItem(array $data): array
@@ -144,6 +137,7 @@ class HeavenlyTourProvider implements TourProviderInterface
     protected function normalizeAvailability(array $data, string $tourId): array
     {
         $isAvailable = (bool)($data['available'] ?? false);
+
         return [
             'tour_id'   => $tourId,
             'available' => $isAvailable,
@@ -151,7 +145,7 @@ class HeavenlyTourProvider implements TourProviderInterface
         ];
     }
 
-    protected function normalizeTourPrice($item): array
+    protected function normalizeTourPrice(array $item): array
     {
         $rawPrice = $item['price'];
         $symbol = mb_substr(trim($rawPrice), 0, 1);
