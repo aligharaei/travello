@@ -74,8 +74,19 @@ class TourController extends Controller
             $page = $request->input('page', 1);
 
             $prices = $this->tourProvider->getTourPrices($perPage, $page);
-            return success('', new PriceCollection($prices));
-        } catch (Exception) {
+            $paginator = new LengthAwarePaginator(
+                collect($prices['data']),
+                $prices['meta']['total'],
+                $prices['meta']['limit'],
+                $prices['meta']['page'],
+                [
+                    'path'     => $request->url(),
+                    'pageName' => 'page',
+                ]
+            );
+
+            return success('', new PriceCollection($paginator));
+        } catch (Exception $e) {
             return failed(__('message.tour.price.error.fetch_failed'));
         }
     }

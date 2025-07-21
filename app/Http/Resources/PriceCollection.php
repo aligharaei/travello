@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources;
 
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class PriceCollection extends ResourceCollection
@@ -11,10 +10,17 @@ class PriceCollection extends ResourceCollection
      * Transform the resource collection into an array.
      *
      * @param $request
-     * @return AnonymousResourceCollection
+     * @return array
      */
-    public function toArray($request): AnonymousResourceCollection
+    public function toArray($request): array
     {
-        return PriceResource::collection($this->collection);
+        return [
+            'data' => PriceResource::collection($this->collection),
+            'meta' => [
+                'total' => $this->total(),
+                'page'  => $this->currentPage(),
+                'limit' => $this->perPage(),
+            ]
+        ];
     }
 }

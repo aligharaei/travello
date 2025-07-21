@@ -106,7 +106,11 @@ class HeavenlyTourProvider implements TourProviderInterface
                 }
 
                 $data = $response->json();
-                return collect($data['data'] ?? [])->map(fn($item) => $this->normalizeTourPrice($item))->all();
+
+                return [
+                    'data' => collect($data['data'] ?? [])->map(fn($item) => $this->normalizeTourPrice($item))->all(),
+                    'meta' => $data['meta'] ?? []
+                ];
 
             } catch (Exception) {
                 throw new Exception("Failed to fetch tour prices");
